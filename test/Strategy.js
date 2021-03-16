@@ -3,8 +3,12 @@ const Token = artifacts.require("ERC20");
 const VX = artifacts.require("VaultX");
 const VY = artifacts.require("VaultY");
 const truffleAssert = require('truffle-assertions');
-const IWeth9 = artifacts.require("IWETH9")
+const IWeth9 = artifacts.require("IWETH9");
+const IUniswap = artifacts.require("IUniswap");
 const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+const USDT_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+const WBTC_ADDRESS = '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'
+const UNISWAP_ADDRESS = '7a250d5630b4cf539739df2c5dacb4c659f2488d'
 var web3 = require("web3");
 
 contract("Str test", async (accounts) => {
@@ -16,10 +20,15 @@ contract("Str test", async (accounts) => {
     let GovernanceOfVault = accounts[3]
     let NewStrategy = accounts[6]
     let User = accounts[7]
+    let Approved = web3.utils.toWei("1000","ether")
     let Amount = web3.utils.toWei("0.02",'ether')
     let AmountWithdraw = web3.utils.toWei("0.01",'ether')
     let AmountTransferToPika =  web3.utils.toWei("0.001", "ether")
-    let WrappedEth = web3.utils.toWei("1","ether")
+    let WrappedEth = web3.utils.toWei("10","ether")
+    let SwappedUsdt = web3.utils.toWei("3","ether")
+    let SwappedWbtc = web3.utils.toWei("3","ether")
+    let deadline = 1715889393
+    let Deadline =
     // 4e16
     let FeeXE18 = web3.utils.toWei("0.04","ether");
     // 5e16
@@ -31,7 +40,16 @@ contract("Str test", async (accounts) => {
 
     before("Should wrap eth to weth", async()=>{
         let weth = await IWeth9.at(WETH_ADDRESS)
+        let usdt = await Token.at(USDT_ADDRESS)
+        let wbtc = await Token.at(WBTC_ADDRESS)
         await weth.send(WrappedEth, {from: User});
+        // let's swap some usdt and wbtc with weths
+        let uniswap = await IUniswap.at(UNISWAP_ADDRESS);
+        weth.approve(UNISWAP_ADDRESS,Approved)
+        usdt.approve(UNISWAP_ADDRESS,Approved)
+        wbtc.approve(UNISWAP_ADDRESS,Approved)
+        uniswap.swapExactTokensForTokens(SwappedUsdt,[WETH_ADDRESS,USDT_ADDRESS],User,deadline,{from:User})
+        uniswap.swapExactTokensForTokens(SwappedWbtc,[WETH_ADDRESS,USDT_ADDRESS],User,deadline,{from:User})
     })
 
     // something about vault
