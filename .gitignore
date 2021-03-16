@@ -118,3 +118,4 @@ dist
 build/
 coverage/
 ./idea
+.DS_Store
