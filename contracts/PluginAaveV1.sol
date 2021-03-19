@@ -73,8 +73,9 @@ contract PluginAaveV1 {
         IWETH(weth).withdraw(_amount);
         address pool = ILendingPoolAddressesProvider(provider).getLendingPool();
         require(pool != address(0), "!pool");
-        ILendingPool(pool).deposit{value: address(this).balance}(eth, _amount, 0);
-        IERC20(aeth).safeTransfer(strategy, _amount);
+        _amount = address(this).balance;
+        ILendingPool(pool).deposit{value: _amount}(eth, _amount, 0);
+        // IERC20(aeth).safeTransfer(strategy, _amount);
     }
 
     function withdraw() public {

@@ -44,6 +44,7 @@ contract PluginAaveV1 {
         require(msg.sender == governance || msg.sender == strategy, "!perm");
         uint256 _amount = IERC20(want).balanceOf(address(this));
         IERC20(want).approve(lendingpool, _amount);
+        // TODO
         ILendingPoolV2(lendingpool).deposit(want, _amount, strategy, 0);
     }
 
@@ -51,6 +52,7 @@ contract PluginAaveV1 {
         require(msg.sender == governance || msg.sender == strategy, "!perm");
         uint256 _amount = IERC20(atoken).balanceOf(address(this));
         IERC20(atoken).approve(lendingpool, _amount);
+        // TODO
         ILendingPoolV2(lendingpool).withdraw(want, _amount, strategy);
     }
 }
