@@ -54,7 +54,7 @@ contract Strategy {
         (bool success, ) = impl.delegatecall(
             abi.encodeWithSignature("dohardwork(bytes)", _data)
         );
-        require(success, "!deposit");
+        require(success, "!dohardwork");
     }
 
     function deposit_(uint256 _ne18) internal {

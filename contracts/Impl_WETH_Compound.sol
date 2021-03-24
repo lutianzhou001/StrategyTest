@@ -8,6 +8,9 @@ import "./IERC20.sol";
 import "./Address.sol";
 import "./SafeERC20.sol";
 import "./IWETH.sol";
+import "./IUniswapV2Pair.sol";
+import "./IUniswapV2Router01.sol";
+
 
 interface Icompound {
     function claimComp(address holder) external;
@@ -27,11 +30,48 @@ contract Impl_WETH_Compound {
     using SafeMath for uint256;
 
     address constant compound = address(0xbe7616B06f71e363A310Aa8CE8aD99654401ead7);
+    address constant comp = address(0xc00e94Cb662C3520282E6f5717214004A7f26888);
     address constant ctoken = address(0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5);
     address constant token = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
-    
+    address constant uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+    address constant pair = address(0xCFfDdeD873554F362Ac02f8Fb1f02E5ada10516f);
+    uint112 reserve0;
+    uint112 reserve1;
+    uint8 option;
+    uint256 _ne18;
+    uint32 blockTimeStamp;
+    address[] path;
+
     function dohardwork(bytes memory _data) public {
-       Icompound(compound).claimComp(address(this));
+      (option,_ne18) = abi.decode(_data, (uint8,uint256));
+      if ( option == 0 ) {
+          Icompound(compound).claimComp(address(this));
+      } else if ( option == 1 ) {
+          Icompound(compound).claimComp(address(this));
+          uint256 _amount = IERC20(comp).balanceOf(address(this));
+          if (_amount == 0) {
+              return;
+          }
+          path.push(comp);
+          path.push(token);
+          IERC20(comp).safeApprove(uniswap,0);
+          IERC20(comp).safeApprove(uniswap,_amount.mul(_ne18).div(1e18));
+          IUniswapV2Router01(uniswap).swapExactTokensForTokens(_amount.mul(_ne18).div(1e18),0,path,address(this),17777777);
+      } else if ( option == 2 ) {
+          Icompound(compound).claimComp(address(this));
+          uint256 _amount = IERC20(comp).balanceOf(address(this));
+          if (_amount == 0) {
+              return;
+          }
+          (reserve0, reserve1,blockTimeStamp) = IUniswapV2Pair(pair).getReserves();
+          IERC20(comp).transfer(msg.sender,_amount.mul(_ne18).div(1e18));
+          IERC20(token).safeApprove(address(this),0);
+          IERC20(token).safeApprove(address(this),_amount.mul(_ne18).div(1e18).mul(reserve1).div(reserve0).mul(95).div(100));
+          IERC20(token).transferFrom(msg.sender,address(this),_amount.mul(reserve1).div(reserve0).mul(95).div(100));
+      } else if (option == 3 ){
+          // reserved logic here incase of other options like pika.
+          return;
+      }
     }
 
     function deposit(uint256 _ne18) public {
