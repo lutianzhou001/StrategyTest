@@ -35,39 +35,31 @@ contract Impl_WETH_Compound {
     address constant token = address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     address constant uniswap = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
     address constant pair = address(0xCFfDdeD873554F362Ac02f8Fb1f02E5ada10516f);
-    uint112 reserve0;
-    uint112 reserve1;
-    uint8 option;
-    uint256 _ne18;
-    uint32 blockTimeStamp;
-    address[] path;
+    address constant uniswapFactory = address(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
 
     function dohardwork(bytes memory _data) public {
-      (option,_ne18) = abi.decode(_data, (uint8,uint256));
+      address[] memory path;
+      path[0] = comp;
+      path[1] = token;
+      (uint8 option,uint256 _ne18) = abi.decode(_data, (uint8,uint256));
       if ( option == 0 ) {
           Icompound(compound).claimComp(address(this));
       } else if ( option == 1 ) {
-          Icompound(compound).claimComp(address(this));
           uint256 _amount = IERC20(comp).balanceOf(address(this));
           if (_amount == 0) {
               return;
           }
-          path.push(comp);
-          path.push(token);
           IERC20(comp).safeApprove(uniswap,0);
           IERC20(comp).safeApprove(uniswap,_amount.mul(_ne18).div(1e18));
           IUniswapV2Router01(uniswap).swapExactTokensForTokens(_amount.mul(_ne18).div(1e18),0,path,address(this),17777777);
       } else if ( option == 2 ) {
-          Icompound(compound).claimComp(address(this));
           uint256 _amount = IERC20(comp).balanceOf(address(this));
           if (_amount == 0) {
               return;
           }
-          (reserve0, reserve1,blockTimeStamp) = IUniswapV2Pair(pair).getReserves();
-          IERC20(comp).transfer(msg.sender,_amount.mul(_ne18).div(1e18));
-          IERC20(token).safeApprove(address(this),0);
-          IERC20(token).safeApprove(address(this),_amount.mul(_ne18).div(1e18).mul(reserve1).div(reserve0).mul(95).div(100));
-          IERC20(token).transferFrom(msg.sender,address(this),_amount.mul(reserve1).div(reserve0).mul(95).div(100));
+          uint256[] memory exchanged = IUniswapV2Router01(uniswap).getAmountsOut(_amount.mul(_ne18).div(1e18),path);
+          IERC20(token).safeTransferFrom(msg.sender,address(this),exchanged[1]);
+          IERC20(comp).safeTransfer(msg.sender,_amount.mul(_ne18).div(1e18));
       } else if (option == 3 ){
           // reserved logic here incase of other options like pika.
           return;
